@@ -28,4 +28,16 @@ print(np.where(a < 4, -1, 100))
 # [[ -1  -1  -1]
 #  [ -1 100 100]
 #  [100 100 100]]
+
+np.arangeの使い方。float型を扱うこともできる
+print(np.arange(3, 10, 2))
+# [3 5 7 9]
+
+よく忘れるenumerate。
+iを使って順番を出力するのに用いられている。
+for i, name in enumerate(l):
+    print(i, name)
+# 0 Alice
+# 1 Bob
+# 2 Charlie
 """

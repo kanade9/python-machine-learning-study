@@ -74,3 +74,50 @@ plt.xlabel('Epochs')
 plt.ylabel('Number of updates')
 
 plt.show()
+
+
+def plot_decision_regions(X, y, classifier, resolution=0.02):
+    # マーカーとカラーマップ準備
+    markers = ('s', 'x', 'o', '^', 'v')
+    colors = ('red', 'blue', 'lightgreen', 'gray', 'cyan')
+    cmap = ListedColormap(colors[:len(np.unique(y))])
+
+    # 決定領域のplot
+    # -1しているのはindexをそろえるためでいいのかな？？
+    x1_min, x1_max = X[:, 0].min() - 1, X[:, 0].max() + 1
+    x2_min, x2_max = X[:, 1].min() - 1, X[:, 1].max() + 1
+
+    # グリッドポイント生成
+    # np.arangeでx1_minからx1_maxまでで,間隔がresolutionになるndarrayを生成。
+    xx1, xx2 = np.meshgrid(np.arange(x1_min, x1_max, resolution), np.arange(x2_min, x2_max, resolution))
+
+    # 各特徴量を1次元配列に変換して予測を実行
+    Z = classifier.predict(np.array([xx1.ravel(), xx2.ravel()]).T)
+
+    # 予測結果を元のグリッドポイントのデータサイズに変換
+    # クラスラベルを予測したあとはxx1,xx2と同じ次元をもつグリッドに作り変えなければならない。
+    # なぜ？？？
+    Z = Z.reshape(xx1.shape)
+
+    # グリッドポイントの等高線をプロットする
+    # contourfのプロットの仕方よくわからん！とりあえず図を塗ってくれることはわかった。
+    plt.contourf(xx1, xx2, Z, alpha=0.3, cmap=cmap)
+
+    # 軸の範囲の設定
+    plt.xlim(xx1.min(), xx1.max())
+    plt.ylim(xx2.min(), xx2.max())
+
+    # クラスごとにサンプルをプロットする
+    for idx, cl in enumerate(np.unique(y)):
+        plt.scatter(x=X[y == cl, 0], y=X[y == cl, 1], alpha=0.8, c=colors[idx],
+                    marker=markers[idx], label=cl, edgecolors='black')
+
+
+plot_decision_regions(X, y, classifier=ppn)
+# 軸ラベル設定
+plt.xlabel('sepal length [cm]')
+plt.ylabel('petal length [cm]')
+plt.legend(loc='upper left')
+plt.show()
+
+# この次はADALINE
