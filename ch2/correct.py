@@ -1,6 +1,5 @@
 # coding: utf-8
 
-
 import numpy as np
 import pandas as pd
 import matplotlib.pyplot as plt
@@ -120,4 +119,114 @@ plt.ylabel('petal length [cm]')
 plt.legend(loc='upper left')
 plt.show()
 
+
 # この次はADALINE
+
+class AdalineGD(object):
+    """param
+    eta: float 学習率 0.0から1まで
+    n_iter : int トレーニングデータのトレーニング回数
+    random_state : int 重み初期化のための乱数シード
+
+    属性
+    w_ 一次元の配列 適合後の重みを表す
+    cost_ list 各エポックでの誤差平方和のコスト関数
+    """
+
+    def __init__(self, eta=0.01, n_iter=50, random_state=1):
+        self.eta = eta
+        self.n_iter = n_iter
+        self.random_state = random_state
+
+    def fit(self, X, y):
+        """
+        :param X: shape=[n_samples, n_features],[サンプルの個数,特徴量の個数]
+        :param Y: shape=[n_samples]
+        :return: self obj
+        """
+        rgen = np.random.RandomState(self.random_state)
+        self.w_ = rgen.normal(loc=0.0, scale=0.01, size=1 + X.shape[1])
+        self.errors_ = []
+        self.cost_ = []
+        # トレーニング回数だけ反復
+        for i in range(self.n_iter):
+            net_input = self.net_input(X)
+
+            # ここは後ほどの実装で使うとこ。今は特に何もしないよ
+            output = self.activation(net_input)
+            # 誤差の計算をする
+            errors = (y - output)
+
+            # ここなぜ転置する必要がある？？ ⇨特徴行列と誤差ベクトルの行列ベクトル積をかけてるんだけど、、、
+            self.w_[1:] += self.eta * X.T.dot(errors)
+            self.w_[0] += self.eta * errors.sum()
+
+            # 　コスト関数の計算
+            cost = (errors ** 2).sum() / 2.0
+            self.cost_.append(cost)
+
+        return self
+
+    def net_input(self, X):
+        # 総入力の計算
+        return np.dot(X, self.w_[1:], ) + self.w_[0]
+
+    def activation(self, X):
+        # 活性化関数の出力はここに書く
+        return X
+
+    def predict(self, X):
+        return np.where(self.activation(self.net_input(X)) >= 0.0, 1, -1)
+
+
+# 描画領域を分割するよ
+fig, ax = plt.subplots(nrows=1, ncols=2, figsize=(10, 4))
+# ADALINE学習
+ada1 = AdalineGD(n_iter=10, eta=0.01).fit(X, y)
+
+# 学習率 0.01の場合の図作成
+ax[0].plot(range(1, len(ada1.cost_) + 1), np.log10(ada1.cost_), marker='o')
+ax[0].set_xlabel('Epochs')
+ax[0].set_ylabel('log(Sum-squared-error)')
+ax[0].set_title('Adaline - Learning rate 0.01')
+
+# 学習率 0.0001の場合の図作成
+ada2 = AdalineGD(n_iter=10, eta=0.0001).fit(X, y)
+ax[1].plot(range(1, len(ada2.cost_) + 1), np.log10(ada2.cost_), marker='o')
+ax[1].set_xlabel('Epochs')
+ax[1].set_ylabel('log(Sum-squared-error)')
+ax[1].set_title('Adaline - Learning rate 0.0001')
+
+plt.show()
+
+# 2-5-2 スケーリングの手法"標準化"を用いて勾配効果法を改善する
+
+# これはdeepcopy
+X_std = np.copy(X)
+# 各列の標準化 .stdで標準偏差を求めることができる
+X_std[:, 0] = (X[:, 0] - X[:, 0].mean()) / X[:, 0].std()
+X_std[:, 1] = (X[:, 1] - X[:, 1].mean()) / X[:, 1].std()
+
+ada = AdalineGD(n_iter=15, eta=0.01)
+ada.fit(X_std, y)
+# 描画
+plot_decision_regions(X_std, y, classifier=ada)
+
+plt.title('Adaline - Gradient Descent')
+plt.xlabel('sepal length [standardized]')
+plt.ylabel('petal length [standardized]')
+# 凡例
+plt.legend(loc='upper left')
+
+# グラフを画像からはみ出さないようにサイズを調整して表示
+plt.tight_layout()
+plt.show()
+
+# エポック数とコストの関係グラフ
+plt.plot(range(1, len(ada.cost_) + 1), ada.cost_, marker='o')
+
+plt.xlabel('Epochs')
+plt.ylabel('Sum-squared-error')
+
+plt.tight_layout()
+plt.show()
