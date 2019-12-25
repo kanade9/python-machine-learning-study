@@ -110,4 +110,116 @@ plt.legend(loc='upper left')
 plt.tight_layout()
 plt.show()
 
+
 # 次はp58のロジスティック回帰から
+
+def sigmoid(z):
+    return 1.0 / (1.0 + np.exp(-z))
+
+
+z = np.arange(-7, 7, 0.1)
+phi_z = sigmoid(z)
+plt.plot(z, phi_z)
+
+# y軸の線を追加する
+plt.axvline(0.0, color='k')
+plt.ylim(-0.1, 1.1)
+plt.xlabel('z')
+# yラベルなんだこれ?? ファイを表したいんだ！！
+plt.ylabel('$\phi (z)$')
+
+# y軸の目盛り追加
+plt.yticks([0.0, 0.5, 1.0])
+# Axesクラスのオブジェクトの取得→pltには複数の流儀があるみたい。
+# https://qiita.com/skotaro/items/08dc0b8c5704c94eafb9https://qiita.com/skotaro/items/08dc0b8c5704c94eafb9
+ax = plt.gca()
+# y軸の目盛りに合わせて水平グリッド線を追加
+ax.yaxis.grid(True)
+# グラフを表示
+plt.tight_layout()
+plt.show()
+
+
+# p63 3-3-2 ロジスティック関数重み学習
+# サンプルが正しいクラス1 or 0 に近いとコストは0だが、分類をミスるとコストが無限大に増ることが確認できる
+# y=1の時のコストを計算
+def cost_1(z):
+    return - np.log(sigmoid(z))
+
+
+# y=0の時のコストを計算
+def cost_0(z):
+    return - np.log(1 - sigmoid(z))
+
+
+z = np.arange(-10, 10, 0.1)
+phi_z = sigmoid(z)
+# y=1のコストを計算して表示する
+c1 = [cost_1(x) for x in z]
+plt.plot(phi_z, c1, label='J(w) if y=1')
+
+# y=0のコストを計算して表示する
+c0 = [cost_0(x) for x in z]
+plt.plot(phi_z, c0, label='J(w) if y=0')
+
+plt.ylim(0.0, 5.1)
+plt.xlim([0, 1])
+plt.xlabel('$\phi$(z)')
+plt.ylabel('J(w)')
+plt.legend(loc='upper center')
+plt.tight_layout()
+plt.show()
+
+
+# p66 ADALINE実装をロジスティック回帰のアルゴリズムに変換する。
+class LogisticRegressionGD(object):
+    def __init__(self, eta=0.05, n_iter=100, random_state=1):
+        self.eta = eta
+        self.n_iter = n_iter
+        self.random_state = random_state
+
+    def fit(self, X, y):
+        rgen = np.random.RandomState(self.random_state)
+        self.w_ = rgen.normal(loc=0.0, scale=0.01, size=1 + X.shape[1])
+        self.cost_ = []
+
+        for i in range(self.n_iter):
+            net_input = self.net_input(X)
+            output = self.activation(net_input)
+            errors = (y - output)
+            self.w_[1:] += self.eta * X.T.dot(errors)
+            self.w_[0] += self.eta * errors.sum()
+
+            # コスト計算では誤差平方和じゃなくてロジスティック回帰のコストだよ！！
+            cost = -y.dot(np.log(output)) + (1 - y).dot(np.log(1 - output))
+            self.cost_.append(cost)
+        return self
+
+    def net_input(self, X):
+        """Calculate net input"""
+        return np.dot(X, self.w_[1:]) + self.w_[0]
+
+    def activation(self, z):
+        # ロジスティックシグモイド活性化関数を計算！！
+        # np.clipでndarrayを任意の最小、最大値に収めることができる。
+        return 1. / (1 + np.exp(-np.clip(z, -250, 250)))
+
+    def predict(self, X):
+        # クラスレベルを返すよ
+        return np.where(self.net_input(X) >= 0.0, 1, 0)
+
+
+# クラス実装終わり。ここから検証(p67)
+
+X_train_01_subset = X_train[(y_train == 0) | (y_train == 1)]
+y_train_01_subset = y_train[(y_train == 0) | (y_train == 1)]
+
+lrgd = LogisticRegressionGD(eta=0.05, n_iter=1000, random_state=1)
+lrgd.fit(X_train_01_subset, y_train_01_subset)
+
+plot_decision_regions(X=X_train_01_subset, y=y_train_01_subset, classifier=lrgd)
+plt.xlabel('petal length')
+plt.ylabel('petal width')
+plt.legend(loc='upper left')
+plt.tight_layout()
+plt.show()
