@@ -223,3 +223,5 @@ plt.ylabel('petal width')
 plt.legend(loc='upper left')
 plt.tight_layout()
 plt.show()
+
+# 3-3-4 scipyを使ったロジスティック回帰モデルトレーニング
