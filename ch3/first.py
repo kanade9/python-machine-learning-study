@@ -7,6 +7,7 @@ from sklearn.linear_model import Perceptron
 from sklearn.metrics import accuracy_score
 from matplotlib.colors import ListedColormap
 import matplotlib.pyplot as plt
+from sklearn.svm import SVC
 
 iris = datasets.load_iris()
 # 3,4列目の特徴量を抽出
@@ -225,3 +226,71 @@ plt.tight_layout()
 plt.show()
 
 # 3-3-4 scipyを使ったロジスティック回帰モデルトレーニング
+# jupyterファイルの方を参照。
+
+# p85 RBFカーネルSVMをIrisデータセットに適用する
+svm = SVC(kernel='rbf', random_state=1, gamma=0.2, C=1.0)
+svm.fit(X_train_std, y_train)
+plot_decision_regions(X_combined_std, y_combined, classifier=svm, test_idx=range(105, 150))
+plt.xlabel('petal length [standardized]')
+plt.ylabel('petal width [standardized]')
+plt.legend(loc='upper left')
+plt.tight_layout()
+plt.show()
+
+# ガンマパラメータを大きくして決定境界に及ぶ影響を確認する。
+svm = SVC(kernel='rbf', random_state=1, gamma=100.0, C=1.0)
+svm.fit(X_train_std, y_train)
+plot_decision_regions(X_combined_std, y_combined, classifier=svm, test_idx=range(105, 150))
+
+plt.xlabel('petal length [standardized]')
+plt.ylabel('petal width [standardized]')
+plt.legend(loc='upper left')
+plt.tight_layout()
+plt.show()
+
+
+# 過学習していることがわかる。
+
+# 3-6 決定木学習
+# 3つの不純度条件を視覚的に比較する！
+# ジニ不純度、エントロピー、分類誤差の3つ。
+def gini(p):
+    return (p) * (1 - (p)) + (1 - p) * (1 - (1 - p))
+
+
+def entropy(p):
+    return - p * np.log2(p) - (1 - p) * np.log2(1 - p)
+
+
+# 分類誤差
+def error(p):
+    return -1 - np.max([p, 1 - p])
+
+
+# 確率生成
+x = np.arange(0.0, 1.0, 0.01)
+ent = [entropy(p) if p != 0 else None for p in x]
+sc_ent = [e * 0.5 if e else None for e in ent]
+err = [error(i) for i in x]
+
+fig = plt.figure()
+ax = plt.subplot(111)
+# 2種類のエントロピーとジニ不純度、分類誤差をそれぞれループ処理
+for i, lab, ls, c, in zip([ent, sc_ent, gini(x), err],
+                          ['Entropy', 'Entropy (scaled)', 'Gini Impurity', 'Misclassification Error'],
+                          ['-', '-', '--', '-.'],
+                          ['black', 'lightgray', 'red', 'green', 'cyan']):
+    line = ax.plot(x, i, label=lab, linestyle=ls, lw=2, color=c)
+
+ax.legend(loc='upper center', bbox_to_anchor=(0.5, 1.15),
+          ncol=5, fancybox=True, shadow=False)
+
+# 2本の水平な波線を引く
+ax.axhline(y=0.5, linewidth=1, color='k', linestyle='--')
+ax.axhline(y=1.0, linewidth=1, color='k', linestyle='--')
+
+plt.ylim([0, 1.1])
+plt.xlabel('p=(i=1)')
+plt.ylabel('Impurity Index')
+plt.show()
