@@ -294,3 +294,49 @@ plt.ylim([0, 1.1])
 plt.xlabel('p=(i=1)')
 plt.ylabel('Impurity Index')
 plt.show()
+
+# 3-6-2 決定木の学習
+from sklearn.tree import DecisionTreeClassifier
+
+tree = DecisionTreeClassifier(criterion='gini', max_depth=4, random_state=1)
+tree.fit(X_train, y_train)
+# vstackとhstackについてはメモで。なんでstackでくっつける必要がある???
+X_combined = np.vstack((X_train, X_test))
+y_combined = np.hstack((y_train, y_test))
+plot_decision_regions(X_combined, y_combined, classifier=tree, test_idx=range(105, 150))
+plt.xlabel('petal length [cm]')
+plt.ylabel('petal width [cm]')
+plt.legend(loc='upper left')
+plt.tight_layout()
+plt.show()
+
+# 3-6-3 ランダムフォレスト
+from sklearn.ensemble import RandomForestClassifier
+
+# エントロピーを指標とするランダムフォレストインスタンス作成
+# n_estimatorsは今回は25で、25個の決定木からランダムフォレストを構築している。
+# n_jobsでcpu並列化。(今回は2つ)
+forest = RandomForestClassifier(criterion='gini', n_estimators=25, random_state=1, n_jobs=2)
+forest.fit(X_train, y_train)
+plot_decision_regions(X_combined, y_combined, classifier=forest, test_idx=range(105, 150))
+
+plt.xlabel('petal length [cm]')
+plt.ylabel('petal width [cm]')
+plt.legend(loc='upper left')
+plt.tight_layout()
+plt.show()
+
+# 3-7 k-近傍法　(KNN)
+from sklearn.neighbors import KNeighborsClassifier
+
+knn = KNeighborsClassifier(n_neighbors=5, p=2, metric='minkowski')
+# minkowskiはユークリッド距離とマンハッタン距離を一般化したもの。(p=1でマンハッタン,p=2でユークリッド)
+knn.fit(X_train_std, y_train)
+plot_decision_regions(X_combined_std, y_combined, classifier=knn, test_idx=range(105, 150))
+plt.xlabel('petal length [standardized]')
+plt.ylabel('petal width [standardized]')
+plt.legend(loc='upper left')
+plt.tight_layout()
+plt.show()
+
+# KNNは次元が増えるとうまく推定できない(次元の呪い)がある。
